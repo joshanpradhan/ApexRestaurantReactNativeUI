@@ -1,10 +1,13 @@
 import React, { Component } from "react";
-import { Image, StyleSheet, Keyboard, ScrollView, TextInput } from "react-native";
+import { Image, StyleSheet, Keyboard, ScrollView, ToastAndroid, TextInput, ActivityIndicator } from "react-native";
+
 import Slider from "react-native-slider";
 
 import { Divider, Button, Block, Text, Switch, Input } from "../components";
 import { theme, mocks } from "../constants";
 import DatePicker from 'react-native-datepicker'
+import axios from 'axios';
+
 
 
 const VALID_DEMO = "demo";
@@ -13,6 +16,7 @@ class MenuForm extends Component {
     state = {
         loading: false,
         errors: [],
+        id: "",
         menu_Name: " ",
         available_Date_From: null,
         available_Date_To: null,
@@ -21,26 +25,114 @@ class MenuForm extends Component {
         createdOn: null,
         updatedBy: " ",
         createdOn: null,
+        menu_form_name: "",
 
     };
-    componentDidMount() {
-        const {menu_id, menu_name, available_date_from, available_date_to, created_by, createdOn, updated_by, updatedOn, is_active} = this.props.route.params;
+
+
+    async postItem() {
         this.setState({
-            menu_Name: menu_name,
-            available_Date_From: available_date_from,
-            available_Date_To: available_date_to,
-            isActive: is_active,
-            createdBy: created_by,
-            createdOn: null,
-            updatedBy: updated_by,
-            updatedOn: null,
+            loading: true
+        });
+        await axios.post(mocks.url + '/api/menu/', {
+            menu_Name: this.state.menu_Name,
+            available_Date_From: this.state.available_Date_From,
+            available_Date_To: this.state.available_Date_To,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffset();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async putItem() {
+        this.setState({
+            loading: true
+        });
+        await axios.put(mocks.url + '/api/menu/', {
+            id: this.state.id,
+            menu_Name: this.state.menu_Name,
+            available_Date_From: this.state.available_Date_From,
+            available_Date_To: this.state.available_Date_To,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffsetUpdate();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, menu created!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+    showToastWithGravityAndOffsetUpdate() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, menu updated!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+
+
+    componentDidMount() {
+        const {id, menu_Name, available_Date_From, available_Date_To, createdBy, createdOn, updatedBy, updatedOn, isActive, menu_form_name} = this.props.route.params;
+        this.setState({
+            id: id,
+            menu_Name: menu_Name,
+            available_Date_From: available_Date_From,
+            available_Date_To: available_Date_To,
+            isActive: isActive,
+            createdBy: createdBy,
+            createdOn: createdOn,
+            updatedBy: updatedBy,
+            updatedOn: updatedOn,
+            menu_form_name: menu_form_name,
 
         });
     }
     handleSubmit() {
         console.log("Inside Submit");
         const {navigation} = this.props;
-        const {menu_Name, available_Date_From, available_Date_To, isActive, createdBy, updatedBy} = this.state;
+        const {menu_Name, available_Date_From, available_Date_To, isActive, createdBy, updatedBy, menu_form_name} = this.state;
         const errors = [];
 
         Keyboard.dismiss();
@@ -55,9 +147,8 @@ class MenuForm extends Component {
         });
 
         if (!errors.length) {
-            console.log("Inside menu form submit");
-            console.log(this.state);
-            navigation.navigate("Home");
+            menu_form_name == "Create menu" ? this.postItem() : this.putItem()
+            navigation.navigate("Menu");
         }
     }
 
@@ -176,7 +267,7 @@ class MenuForm extends Component {
             }}
             date={this.state.createdOn}
             mode="date"
-            placeholder="Date of meal"
+            placeholder="Date of created on"
             format="YYYY-MM-DD"
             minDate="2020-05-01"
             maxDate="2022-06-01"
@@ -222,7 +313,7 @@ class MenuForm extends Component {
             }}
             date={this.state.updatedOn}
             mode="date"
-            placeholder="Date of meal"
+            placeholder="Date of updated on"
             format="YYYY-MM-DD"
             minDate="2020-05-01"
             maxDate="2022-06-01"
@@ -265,11 +356,11 @@ class MenuForm extends Component {
            
             </Block>
              <Button gradient onPress={() => this.handleSubmit()}>
-              {loading ? (
+              {this.state.loading ? (
                 <ActivityIndicator size="small" color="white" />
                 ) : (
                 <Text bold white center>
-                  Create
+                 {this.state.menu_form_name == "Create menu" ? 'Create' : 'Edit'}
                 </Text>
                 )}
             </Button>

@@ -7,26 +7,30 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { theme } from "../constants";
 
 
-import Welcome from "../screens/Welcome";
-import Login from "../screens/Login";
-import SignUp from "../screens/SignUp";
-import Forgot from "../screens/Forgot";
-import Meal from "../screens/Meal";
-import MealForm from "../screens/MealForm";
-import MealDishes from "../screens/MealDishes";
-import MealDishForm from "../screens/MealDishForm";
-import Menu from "../screens/Menu";
-import MenuForm from "../screens/MenuForm";
-import Customer from "../screens/Customer";
-import CustomerForm from "../screens/CustomerForm";
-import Staff from "../screens/Staff";
-import StaffForm from "../screens/StaffForm";
-import StaffRole from "../screens/StaffRole";
-import StaffRoleForm from "../screens/StaffRoleForm";
-import MenuItems from "../screens/MenuItems";
-import MenuItemForm from "../screens/MenuItemForm";
+import Welcome from '../screens/Welcome';
+import Login from '../screens/Login';
+import SignUp from '../screens/SignUp';
+import Forgot from '../screens/Welcome';
+import Meal from '../screens/Meal';
+import MealForm from '../screens/MealForm';
+import MealDishes from '../screens/MealDishes';
+import MealDishForm from '../screens/MealDishForm';
+import Menu from '../screens/Menu';
+import MenuForm from '../screens/MenuForm';
+import Customer from '../screens/Customer';
+import CustomerForm from '../screens/CustomerForm';
+import Staff from '../screens/Staff';
+import StaffForm from '../screens/StaffForm';
+import StaffRole from '../screens/StaffRole';
+import StaffRoleForm from '../screens/StaffRoleForm';
+import MenuItems from '../screens/MenuItems';
+import MenuItemForm from '../screens/MenuItemForm';
 
 
+
+
+// import { Welcome, Login, SignUp, Forgot, Meal, MealForm, MealDishes, MealDishForm, Menu, 
+//     MenuForm, Customer, CustomerForm, Staff, StaffForm, StaffRole, StaffRoleForm, MenuItems, MenuItemForm } from "../screens/index";
 
 const Stack = createStackNavigator();
 

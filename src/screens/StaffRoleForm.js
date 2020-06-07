@@ -1,10 +1,12 @@
 import React, { Component } from "react";
-import { Image, StyleSheet, Keyboard, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { Image, StyleSheet, Keyboard, ScrollView, ToastAndroid, TextInput, ActivityIndicator } from "react-native";
 import Slider from "react-native-slider";
 
 import { Divider, Button, Block, Text, Switch, Input } from "../components";
 import { theme, mocks } from "../constants";
-import DatePicker from 'react-native-datepicker'
+import DatePicker from 'react-native-datepicker';
+import axios from 'axios';
+
 
 
 
@@ -12,29 +14,116 @@ class StaffRoleForm extends Component {
     state = {
         loading: false,
         errors: [],
+        staff_Roles_Id: "",
         staff_Roles_Description: "",
         isActive: true,
         createdBy: "",
         createdOn: null,
         updatedBy: "",
         updatedOn: null,
+        staffRole_form_name: "",
     };
+
+    async postItem() {
+
+        this.setState({
+            loading: true
+        });
+        await axios.post(mocks.url + '/api/staffrole/', {
+            staff_Roles_Description: this.state.staff_Roles_Description,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffset();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async putItem() {
+
+        this.setState({
+            loading: true
+        });
+        await axios.put(mocks.url + '/api/staffrole/', {
+            staff_Roles_Id: this.state.staff_Roles_Id,
+            staff_Roles_Description: this.state.staff_Roles_Description,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffsetUpdate();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, staff role created!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+
+    showToastWithGravityAndOffsetUpdate() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, staff role updated!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
     componentDidMount() {
 
-        const {staff_Roles_Id, staff_Roles_Description, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.props.route.params;
+        const {staff_Roles_Id, staff_Roles_Description, isActive, createdBy, createdOn, updatedBy, updatedOn, staffRole_form_name} = this.props.route.params;
         this.setState({
+            staff_Roles_Id: staff_Roles_Id,
             staff_Roles_Description: staff_Roles_Description,
             isActive: isActive,
             createdBy: createdBy,
             createdOn: createdOn,
             updatedBy: updatedBy,
             updatedOn: updatedOn,
+            staffRole_form_name: staffRole_form_name,
         });
     }
     handleSubmit() {
         console.log("Inside Submit");
         const {navigation} = this.props;
-        const {staff_Roles_Description, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.state;
+        const {staff_Roles_Description, isActive, createdBy, createdOn, updatedBy, updatedOn, staffRole_form_name} = this.state;
 
         const errors = [];
 
@@ -48,9 +137,8 @@ class StaffRoleForm extends Component {
         });
 
         if (!errors.length) {
-            console.log("Inside staff role form submit");
-            console.log(this.state);
-            navigation.navigate("Home");
+            staffRole_form_name == "Create staff role" ? this.postItem() : this.putItem()
+            navigation.navigate("Staff Role");
         }
     }
 
@@ -180,11 +268,11 @@ class StaffRoleForm extends Component {
            
             </Block>
              <Button gradient onPress={() => this.handleSubmit()}>
-              {loading ? (
+              {this.state.loading ? (
                 <ActivityIndicator size="small" color="white" />
                 ) : (
                 <Text bold white center>
-                  Create
+                 {this.state.staffRole_form_name == "Create staff role" ? 'create' : 'edit'}
                 </Text>
                 )}
             </Button>

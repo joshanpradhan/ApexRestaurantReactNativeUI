@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Image, StyleSheet, Keyboard, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import { Image, StyleSheet, Keyboard, ToastAndroid, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import Slider from "react-native-slider";
 
 import { Divider, Button, Block, Text, Switch, Input } from "../components";
@@ -13,6 +13,7 @@ class CustomerForm extends Component {
     state = {
         loading: false,
         errors: [],
+        id: "",
         firstName: "",
         lastName: "",
         address: "",
@@ -24,27 +25,104 @@ class CustomerForm extends Component {
         createdOn: null,
         updatedBy: "",
         updatedOn: null,
+        customer_form_name: "",
     };
 
     async postItem() {
-        console.log("create");
+
         this.setState({
             loading: true
         });
-        axios.post(`https://jsonplaceholder.typicode.com/users`, {})
-            .then(res => {
+        await axios.post(mocks.url + '/api/customer/', {
+            firstName: this.state.firstName,
+            lastName: this.state.lastName,
+            address: this.state.address,
+            phoneRes: this.state.phoneRes,
+            phoneMob: this.state.phoneMob,
+            enrollDate: this.state.enrollDate,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffset();
                 this.setState({
-                    customers: res.data
+                    loading: false
                 });
+
             })
-        this.setState({
-            loading: false
-        });
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
     }
 
-    componentDidMount() {
-        const {id, firstName, lastName, address, phoneRes, phoneMob, enrollDate, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.props.route.params;
+    async putItem() {
+
         this.setState({
+            loading: true
+        });
+        await axios.put(mocks.url + '/api/customer/', {
+            id: this.state.id,
+            firstName: this.state.firstName,
+            lastName: this.state.lastName,
+            address: this.state.address,
+            phoneRes: this.state.phoneRes,
+            phoneMob: this.state.phoneMob,
+            enrollDate: this.state.enrollDate,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffsetUpdate();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, customer created!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+
+    showToastWithGravityAndOffsetUpdate() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, customer updated!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+    componentDidMount() {
+        const {id, firstName, lastName, address, phoneRes, phoneMob, enrollDate, isActive, createdBy, createdOn, updatedBy, updatedOn, customer_form_name} = this.props.route.params;
+        this.setState({
+            id: id,
             firstName: firstName,
             lastName: lastName,
             address: address,
@@ -56,13 +134,14 @@ class CustomerForm extends Component {
             createdOn: createdOn,
             updatedBy: updatedBy,
             updatedOn: updatedOn,
+            customer_form_name: customer_form_name,
         });
     }
 
     handleSubmit() {
         console.log("Inside Submit");
         const {navigation} = this.props;
-        const {firstName, lastName, address, phoneRes, phoneMob, enrollDate, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.state;
+        const {firstName, lastName, address, phoneRes, phoneMob, enrollDate, isActive, createdBy, createdOn, updatedBy, updatedOn, customer_form_name} = this.state;
 
         const errors = [];
 
@@ -78,10 +157,8 @@ class CustomerForm extends Component {
         });
 
         if (!errors.length) {
-            console.log("Inside customer form  ");
-            console.log(this.state);
-
-            navigation.navigate("Home");
+            customer_form_name == "Create customer" ? this.postItem() : this.putItem()
+            navigation.navigate("Customer");
         }
     }
 
@@ -293,11 +370,11 @@ class CustomerForm extends Component {
            
             </Block>
              <Button gradient onPress={() => this.handleSubmit()}>
-              {loading ? (
+              {this.state.loading ? (
                 <ActivityIndicator size="small" color="white" />
                 ) : (
                 <Text bold white center>
-                  Create
+                 {this.state.customer_form_name == "Create customer" ? 'create' : 'edit'}
                 </Text>
                 )}
             </Button>

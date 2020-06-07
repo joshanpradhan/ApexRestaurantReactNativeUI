@@ -1,10 +1,12 @@
 import React, { Component } from "react";
-import { Dimensions, Image, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { Dimensions, Image, StyleSheet, RefreshControl, ToastAndroid, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 
 import { Card, Badge, Button, Block, Text } from "../components";
 import { theme, mocks } from "../constants";
 import Moment from 'moment';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import axios from 'axios';
+
 
 
 const {width} = Dimensions.get("window");
@@ -13,8 +15,73 @@ class Menu extends Component {
     state = {
         menus: [],
         image: {},
+        loading: true,
+        refreshing: false,
     };
-    createDeleteAlert() {
+
+
+    onRefresh() {
+
+        this.setState({
+            refreshing: true
+        })
+        this.getMenu();
+        this.setState({
+            refreshing: false
+        })
+
+    }
+
+    async getMenu() {
+        this.setState({
+            loading: true
+        });
+        await axios.get(mocks.url + '/api/menu/')
+            .then(response => {
+                //handle success
+                this.setState({
+                    menus: response.data,
+                    loading: false
+                });
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async deleteMenu(id) {
+        await axios.delete(mocks.url + `/api/menu/${id}`)
+            .then(response => {
+                //handle success
+                this.showToastWithGravityAndOffset();
+                this.getMenu();
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, menu deleted! :)",
+            ToastAndroid.LONG,
+            ToastAndroid.BOTTOM,
+            25,
+            50
+        );
+    }
+
+    createDeleteAlert(id) {
         Alert.alert(
             "Delete",
             "Are you sure you want to delete it?",
@@ -25,14 +92,16 @@ class Menu extends Component {
             },
                 {
                     text: "Confirm",
-                    onPress: () => console.log("Confirm Pressed")
+                    onPress: () => this.deleteMenu(id)
                 }
             ], {
                 cancelable: false
             }
         );
     }
+
     componentDidMount() {
+        this.getMenu();
         this.setState({
             menus: this.props.menus,
             image: this.props.image,
@@ -50,34 +119,40 @@ class Menu extends Component {
            Food Menu
           </Text>
         </Block>
-        <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{
-                paddingVertical: theme.sizes.base * 0.5
-            }}
-            >
+       
+       { this.state.loading ? <ActivityIndicator size="large" color="#0000ff" /> :
+                this.state.menus.length > 0 ?
+                    <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                    <RefreshControl refreshing={this.state.refreshing} onRefresh={() => this.onRefresh()} />
+                    }
+                    style={{
+                        paddingVertical: theme.sizes.base * 0.5
+                    }}
+                    >
           <Block flex={false} column style={styles.menus}>
             {menus.map(menu => (
-                <TouchableOpacity
-                key={menu.menu_Name}
-                onPress={() => navigation.navigate("MenuItems", {
-                    menu_id: menu.id,
-                    menu_name: menu.menu_Name
-                })}
-                activeOpacity={0.6}
-                >
+                        <TouchableOpacity
+                        key={menu.menu_Name}
+                        onPress={() => navigation.navigate("MenuItems", {
+                            menu_id: menu.id,
+                            menu_name: menu.menu_Name
+                        })}
+                        activeOpacity={0.6}
+                        >
                 <Card  shadow style={styles.menu}>
                      <Block flex={false} row space="between">
 
                   <Badge
-                margin={[0, 0, 10]}
-                size={60}
-                color="rgba(41,216,143,0.20)"
-                >
+                        margin={[0, 0, 10]}
+                        size={60}
+                        color="rgba(41,216,143,0.20)"
+                        >
                     <Image source={image.image} style={{
-                    width: 35,
-                    height: 35
-                }}/>
+                            width: 35,
+                            height: 35
+                        }}/>
                   </Badge>
                   <Text h2 bold height={55}>
                     {menu.menu_Name}
@@ -104,45 +179,62 @@ class Menu extends Component {
         <Block flex={false} row space="between">
 
                    <TouchableOpacity
-                onPress={() => navigation.navigate("Menu Form", {
-                    menu_form_name: "Edit menu",
-                    menu_id: menu.id,
-                    menu_name: menu.menu_Name,
-                    available_date_from: menu.available_Date_To,
-                    available_date_to: menu.available_Date_To,
-                    created_by: menu.createdBy,
-                    createdOn: menu.createdOn,
-                    updated_by: menu.updatedBy,
-                    updatedOn: menu.updatedOn,
-                    is_active: menu.isActive,
-                })}
-                activeOpacity={0.6}
+                        onPress={() => navigation.navigate("Menu Form", {
+                            menu_form_name: "Edit menu",
+                            id: menu.id,
+                            menu_Name: menu.menu_Name,
+                            available_Date_From: menu.available_Date_From,
+                            available_Date_To: menu.available_Date_To,
+                            createdBy: menu.createdBy,
+                            createdOn: menu.createdOn,
+                            updatedBy: menu.updatedBy,
+                            updatedOn: menu.updatedOn,
+                            isActive: menu.isActive,
+                        })}
+                        activeOpacity={0.6}
 
-                >
+                        >
             <Image source={image.editIcon} style={{
-                    width: 40,
-                    height: 40,
+                            width: 40,
+                            height: 40,
 
-                }}/>
+                        }}/>
               </TouchableOpacity> 
                  
  <TouchableOpacity
-                onPress={this.createDeleteAlert}
-                activeOpacity={0.6}
-                >
+                        onPress={() => this.createDeleteAlert(menu.id)}
+                        activeOpacity={0.6}
+                        >
             <Image source={image.deleteIcon} style={{
-                    width: 40,
-                    height: 40,
+                            width: 40,
+                            height: 40,
 
-                }}/>
+                        }}/>
               </TouchableOpacity> 
                            </Block>
                   
                 </Card>
               </TouchableOpacity>
-            ))}
+                    ))}
           </Block>
         </ScrollView>
+                    :
+                    <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                    <RefreshControl refreshing={this.state.refreshing} onRefresh={() => this.onRefresh()} />
+                    }
+                    style={{
+                        paddingVertical: theme.sizes.base * 0.5
+                    }}
+                    >
+                    <Block flex={1} center middle style={styles.header}>
+          <Text h2 bold>
+            No food menu 
+          </Text>
+        </Block>
+        </ScrollView>
+            }
         <Block style={{
                 flexDirection: 'row-reverse',
                 alignItems: 'flex-end',

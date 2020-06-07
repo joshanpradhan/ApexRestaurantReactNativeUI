@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import { Image, StyleSheet, Keyboard, ScrollView, TextInput, Picker } from "react-native";
+import { Image, StyleSheet, Keyboard, ScrollView, ToastAndroid, TextInput, ActivityIndicator, Picker } from "react-native";
 import Slider from "react-native-slider";
-
 import { Divider, Button, Block, Text, Switch, Input } from "../components";
 import { theme, mocks } from "../constants";
 import DatePicker from 'react-native-datepicker'
+import axios from 'axios';
 
 const VALID_DEMO = "demo";
 
@@ -14,6 +14,7 @@ class MealForm extends Component {
         errors: [],
         staffs: [],
         customers: [],
+        mealId: "",
         staffId: "",
         customerId: "",
         date_of_Meal: null,
@@ -23,13 +24,149 @@ class MealForm extends Component {
         createdOn: null,
         updatedBy: "",
         updatedOn: null,
+        meal_form_name: "",
 
     };
+    async getStaff() {
+        this.setState({
+            loading: true
+        });
+        await axios.get(mocks.url + '/api/staff/')
+            .then(response => {
+                //handle success
+                this.setState({
+                    staffs: response.data,
+                    loading: false
+                });
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async getCustomer() {
+        this.setState({
+            loading: true
+        });
+        await axios.get(mocks.url + '/api/customer/')
+            .then(response => {
+                //handle success
+                this.setState({
+                    customers: response.data,
+                    loading: false
+                });
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async postItem() {
+        console.log(this.state.staffId);
+        console.log(this.state.customerId);
+
+        this.setState({
+            loading: true
+        });
+        await axios.post(mocks.url + '/api/meal/', {
+            staffId: this.state.staffId,
+            customerId: this.state.customerId,
+            date_of_Meal: this.state.date_of_Meal,
+            cost_of_Meal: this.state.cost_of_Meal,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffset();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async putItem() {
+        console.log(this.state.staffId);
+        console.log(this.state.customerId);
+
+        this.setState({
+            loading: true
+        });
+        await axios.put(mocks.url + '/api/meal/', {
+            mealId: this.state.mealId,
+            staffId: this.state.staffId,
+            customerId: this.state.customerId,
+            date_of_Meal: this.state.date_of_Meal,
+            cost_of_Meal: this.state.cost_of_Meal,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffsetUpdate();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, meal created!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+    showToastWithGravityAndOffsetUpdate() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, meal updated!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
     componentDidMount() {
-        const {staffId, customerId, date_of_Meal, cost_of_Meal, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.props.route.params;
+        this.getStaff();
+        this.getCustomer();
+
+        const {mealId, staffId, customerId, date_of_Meal, cost_of_Meal, isActive, createdBy, createdOn, updatedBy, updatedOn, meal_form_name} = this.props.route.params;
         this.setState({
             staffs: this.props.staffs,
             customers: this.props.customers,
+            mealId: mealId,
             staffId: staffId,
             customerId: customerId,
             date_of_Meal: date_of_Meal,
@@ -39,6 +176,7 @@ class MealForm extends Component {
             createdOn: createdOn,
             updatedBy: updatedBy,
             updatedOn: updatedOn,
+            meal_form_name: meal_form_name,
         });
     }
 
@@ -92,7 +230,7 @@ class MealForm extends Component {
 
     handleSubmit() {
         const {navigation} = this.props;
-        const {staffId, customerId, date_of_Meal, cost_of_Meal, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.state;
+        const {staffId, customerId, date_of_Meal, cost_of_Meal, isActive, createdBy, createdOn, updatedBy, updatedOn, meal_form_name} = this.state;
         const errors = [];
 
         Keyboard.dismiss();
@@ -107,10 +245,8 @@ class MealForm extends Component {
         });
 
         if (!errors.length) {
-
-            console.log("inside meal form submit");
-            console.log(this.state);
-            navigation.navigate("Home");
+            meal_form_name == "Create meal" ? this.postItem() : this.putItem()
+            navigation.navigate("Meal");
         }
     }
 
@@ -290,11 +426,11 @@ class MealForm extends Component {
            
             </Block>
              <Button gradient onPress={() => this.handleSubmit()}>
-              {loading ? (
+              {this.state.loading ? (
                 <ActivityIndicator size="small" color="white" />
                 ) : (
                 <Text bold white center>
-                  Create
+                 {this.state.meal_form_name == "Create meal" ? 'Create' : 'Edit'}
                 </Text>
                 )}
             </Button>

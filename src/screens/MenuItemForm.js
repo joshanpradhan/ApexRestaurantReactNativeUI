@@ -1,10 +1,12 @@
 import React, { Component } from "react";
-import { Image, StyleSheet, Keyboard, ScrollView, TextInput, Picker } from "react-native";
+import { Image, StyleSheet, Keyboard, ScrollView, ToastAndroid, TextInput, ActivityIndicator, Picker } from "react-native";
 import Slider from "react-native-slider";
 
 import { Divider, Button, Block, Text, Switch, Input } from "../components";
 import { theme, mocks } from "../constants";
-import DatePicker from 'react-native-datepicker'
+import DatePicker from 'react-native-datepicker';
+import axios from 'axios';
+
 
 const VALID_DEMO = "demo";
 
@@ -13,6 +15,7 @@ class MenuItemForm extends Component {
         loading: false,
         errors: [],
         menus: [],
+        menuItemId: "",
         menuId: "",
         menu_Items_Name: "",
         isActive: true,
@@ -20,11 +23,122 @@ class MenuItemForm extends Component {
         createdOn: null,
         updatedBy: "",
         updatedOn: null,
+        menu_item_form_name: "",
     };
-    componentDidMount() {
-        const {menuItemId, menuId, menu_Items_Name, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.props.route.params;
+
+
+    async getMenu() {
         this.setState({
-            menus: this.props.menus,
+            loading: true
+        });
+        await axios.get(mocks.url + '/api/menu/')
+            .then(response => {
+                //handle success
+                this.setState({
+                    menus: response.data,
+                    loading: false
+                });
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+
+    async postItem() {
+
+        this.setState({
+            loading: true
+        });
+        await axios.post(mocks.url + '/api/menuItem/', {
+            menuId: this.state.menuId,
+            menu_Items_Name: this.state.menu_Items_Name,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffset();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+    async putItem() {
+
+        this.setState({
+            loading: true
+        });
+        await axios.put(mocks.url + '/api/menuItem/', {
+            menuItemId: this.state.menuItemId,
+            menuId: this.state.menuId,
+            menu_Items_Name: this.state.menu_Items_Name,
+            isActive: this.state.isActive,
+            createdBy: this.state.createdBy,
+            createdOn: this.state.createdOn,
+            updatedBy: this.state.updatedBy,
+            updatedOn: this.state.updatedOn,
+        })
+            .then(response => {
+                this.showToastWithGravityAndOffsetUpdate();
+                this.setState({
+                    loading: false
+                });
+
+            })
+            .catch(error => {
+                // handle error
+                this.setState({
+                    loading: false
+                });
+                console.log(error);
+            })
+    }
+
+
+
+    showToastWithGravityAndOffset() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, menu items created!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+
+    showToastWithGravityAndOffsetUpdate() {
+        ToastAndroid.showWithGravityAndOffset(
+            "Success, menu items updated!",
+            ToastAndroid.LONG,
+            ToastAndroid.TOP,
+            25,
+            50
+        );
+    }
+
+
+    componentDidMount() {
+        this.getMenu();
+        const {menuItemId, menuId, menu_Items_Name, isActive, createdBy, createdOn, updatedBy, updatedOn, menu_item_form_name} = this.props.route.params;
+        this.setState({
+            menuItemId: menuItemId,
             menuId: menuId,
             menu_Items_Name: menu_Items_Name,
             isActive: isActive,
@@ -32,6 +146,8 @@ class MenuItemForm extends Component {
             createdOn: createdOn,
             updatedBy: updatedBy,
             updatedOn: updatedOn,
+            menu_item_form_name: menu_item_form_name,
+
         });
     }
 
@@ -60,7 +176,7 @@ class MenuItemForm extends Component {
     handleSubmit() {
         console.log("Inside Submit");
         const {navigation} = this.props;
-        const {menuId, menu_Items_Name, isActive, createdBy, createdOn, updatedBy, updatedOn} = this.state;
+        const {menuId, menu_Items_Name, isActive, createdBy, createdOn, updatedBy, updatedOn, menu_item_form_name} = this.state;
         const errors = [];
 
         Keyboard.dismiss();
@@ -75,9 +191,8 @@ class MenuItemForm extends Component {
         });
 
         if (!errors.length) {
-            console.log("Inside Menu Item Form submit");
-            console.log(this.state);
-            navigation.navigate("Home");
+            menu_item_form_name == "Create menu item" ? this.postItem() : this.putItem()
+            navigation.navigate("MenuItems");
         }
     }
 
@@ -218,11 +333,11 @@ class MenuItemForm extends Component {
            
             </Block>
              <Button gradient onPress={() => this.handleSubmit()}>
-              {loading ? (
+              {this.state.loading ? (
                 <ActivityIndicator size="small" color="white" />
                 ) : (
                 <Text bold white center>
-                  Create
+                 {this.state.menu_item_form_name == "Create menu item" ? 'create' : 'edit'}
                 </Text>
                 )}
             </Button>
